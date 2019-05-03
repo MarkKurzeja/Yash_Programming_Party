@@ -1,3 +1,4 @@
+rm(list = ls())
 library(rstan)
 library(magrittr)
 library(plyr)
@@ -5,96 +6,60 @@ library(dplyr)
 library(ggplot2)
 library(tidyr)
 options(mc.cores = parallel::detectCores())
-# rm(list = ls())
-setwd("C:/Users/Mark/Dropbox/Coding & Data Projects/Gaussian Processes Example")
+setwd("C:/Users/mtkur/Dropbox/Coding & Data Projects/Gaussian Processes Example")
 
-# mmod <- stan_model(file="gp-predict-mark.stan");
-tfun <- function(x) {
+
+fx <- function(x) {
   3 * cos(x) - .1 + 2 * x
 }
 
-xbegin = seq(5,15, length = 40)
-y = tfun(x) + rnorm(length(x), 0, .5)
+# Create the sample data
+x = seq(5,15, length = 40)
+y = fx(x) + rnorm(length(x), 0, .5)
 predx <- seq(5,20, length = 20)
 
+# Plot the sample data
+plot(x,y)
+curve(fx, add = T)
 
-# plot(x,y)
-# curve(tfun, add = T)
-
-
+# Create the data for the input to the algorithm
 sdat <- list(
-  n = length(xbegin),
-  x = xbegin,
+  n = length(x),
+  x = x,
   y = y,
   pred_length = length(predx),
   pred_x = predx,
   nruns = 100
 )
 
-# Optimizing Only?
-# type = "MLE"
-# type = "VB"
-type = "BAYES"
+# Compile the model from source
+mmod <- stan_model(file="gp-predict-mark.stan");
 
-if (type != "MLE") {
-  if (type == "VB") {
-    res <- vb(mmod, data=sdat)
-    
-  } else {
-    res <- sampling(mmod, data=sdat,  iter = 2000, chains = 1)
-    
-  }
-} else {
-  res <- optimizing(mmod, data=sdat)
-}
+# Run the stan algorithm
+res <- sampling(mmod, data=sdat,  iter = 500, chains = 1)
 
-# print(res, pars = c('rho','alpha','sigma', "eta"))
+output <- rstan::extract(res)
 
-if (type == "MLE") {
-  dat <- cbind(data.frame(x = predx), data.frame(y = res$par[res$par %>% names() %>% grep(pattern = "y2\\[", x = .)]))
-  dat <- plyr::adply(dat, 1, function(val) {
-    data.frame(x = val$x, y = rnorm(500, val$y, res$par["sigma"]))
-  }) 
-  dat %<>% dplyr::group_by(x) %>% 
-    dplyr::summarize(low = quantile(y, probs = 0.025),
-                     upper = quantile(y, probs = 0.975),
-                     mmean = mean(y),
-                     mmedian = median(y))
-  
-  ggplot(data.frame(x = x, y = y)) + 
-    stat_function(fun = tfun) +
-    theme_bw() + 
-    geom_ribbon(aes(x = x, ymin = low, ymax = upper), dat, alpha = 0.1) + 
-    geom_line(aes(x, mmedian), dat, linetype = 2) + 
-    geom_point(aes(x,y)) + 
-    # scale_y_continuous(limits = c(-5,15)) + 
-    # scale_x_continuous(limits = c(0,20)) +
-    ggtitle(type)
-  
-} else {
-  output <- rstan::extract(res)
-  
-  b <- output$y2 %>% t() %>% data.frame() %>% cbind(data.frame(x = predx))
-  
-  bounds <- b %>% gather("key", "value", -x) %>%
-    dplyr::group_by(x) %>% 
-    dplyr::summarize(low = quantile(value, probs = 0.025),
-                     upper = quantile(value, probs = 0.975),
-                     mmean = mean(value),
-                     mmedian = median(value))
-  
-  
-  b %>% gather("key", "value", -x) %>%
-    ggplot() +
-    geom_ribbon(aes(x = x, ymin = low, ymax = upper), bounds, alpha = 0.1) + 
-    geom_point(aes(x, y), data.frame(x = x, y = y), color = "black") +
-    stat_function(fun = tfun) +
-    geom_line(aes(x, mmedian), bounds, linetype = 2) + 
-    theme_bw() + 
-    ggtitle(type)
-  
-}
+# Take the matrix of outputs from the model and bind them into a prediction matrix
+b <- output$y2 %>% t() %>% data.frame() %>% cbind(data.frame(x = predx))
 
+# Extract the relevant stats from the simulations
+bounds <- b %>% gather("key", "value", -x) %>%
+  dplyr::group_by(x) %>% 
+  dplyr::summarize(low = quantile(value, probs = 0.025),
+                   upper = quantile(value, probs = 0.975),
+                   mmean = mean(value),
+                   mmedian = median(value))
+
+b %>% gather("key", "value", -x) %>%
+  ggplot() +
+  geom_ribbon(aes(x = x, ymin = low, ymax = upper), bounds, alpha = 0.1) + 
+  geom_point(aes(x, y), data.frame(x = x, y = y), color = "black") +
+  stat_function(fun = fx) +
+  geom_line(aes(x, mmedian), bounds, linetype = 2) + 
+  theme_bw() + 
+  ggtitle(type)
+  
 
 
 x = c(xbegin, predx)
