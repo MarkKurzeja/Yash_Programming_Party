@@ -1,3 +1,4 @@
+rm(list = ls())
 library(rstan)
 library(magrittr)
 library(plyr)
@@ -5,21 +6,20 @@ library(dplyr)
 library(ggplot2)
 library(tidyr)
 options(mc.cores = parallel::detectCores())
-# rm(list = ls())
-setwd("C:/Users/Mark/Dropbox/Coding & Data Projects/Gaussian Processes Example")
+setwd("C:/Users/mtkur/Dropbox/Coding & Data Projects/Gaussian Processes Example")
 
-# mmod <- stan_model(file="gp-predict-mark.stan");
+mmod <- stan_model(file="gp-predict-mark.stan");
 tfun <- function(x) {
   3 * cos(x) - .1 + 2 * x
 }
 
 xbegin = seq(5,15, length = 40)
-y = tfun(x) + rnorm(length(x), 0, .5)
+y = tfun(xbegin) + rnorm(length(xbegin), 0, .5)
 predx <- seq(5,20, length = 20)
 
 
-# plot(x,y)
-# curve(tfun, add = T)
+plot(xbegin,y)
+curve(tfun, add = T)
 
 
 sdat <- list(
@@ -31,24 +31,9 @@ sdat <- list(
   nruns = 100
 )
 
-# Optimizing Only?
-# type = "MLE"
-# type = "VB"
-type = "BAYES"
 
-if (type != "MLE") {
-  if (type == "VB") {
-    res <- vb(mmod, data=sdat)
+res <- sampling(mmod, data=sdat,  iter = 2000, chains = 1)
     
-  } else {
-    res <- sampling(mmod, data=sdat,  iter = 2000, chains = 1)
-    
-  }
-} else {
-  res <- optimizing(mmod, data=sdat)
-}
-
-# print(res, pars = c('rho','alpha','sigma', "eta"))
 
 if (type == "MLE") {
   dat <- cbind(data.frame(x = predx), data.frame(y = res$par[res$par %>% names() %>% grep(pattern = "y2\\[", x = .)]))
@@ -133,29 +118,6 @@ ggplot(pp) +
 
 
 
-
-
-
-
-
-
-
-  # ggplot(data.frame(x = 1, y = 1)) +
-# stat_function()
-
-
-
-# library(tidyr)
-# library(magrittr)
-# library(ggplot2)
-# 
-# x = mvtnorm::rmvnorm(100, mean = rep(0,10), sigma = diag(10))
-# 
-# x %<>% t() %>% data.frame()
-# x %<>% cbind(data.frame(v = 1:nrow(x)))
-# x %<>% gather("key", "value", -v)
-# 
-# ggplot(x) + geom_line(aes(v,value, group = key))
 
 
 
