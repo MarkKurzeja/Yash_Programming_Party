@@ -65,7 +65,7 @@ cov_func_sqexp <- function(l_param) {
 
 result <- compute_mean_gp(x = x, 
                 y = y, 
-                cov_func_sqexp(.2), rep(0.01, length(x)), seq(1,10, length = 100))
+                cov_func_sqexp(.2), rep(.01, length(x)), seq(1,10, length = 100))
 
 
 # Plotting for debugging
