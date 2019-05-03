@@ -6,7 +6,7 @@ library(dplyr)
 library(ggplot2)
 library(tidyr)
 options(mc.cores = parallel::detectCores())
-setwd("C:/Users/mtkur/Dropbox/Coding & Data Projects/Gaussian Processes Example")
+setwd("C:/Users/mtkur/Dropbox/Coding & Data Projects/Yash_Programming_Party")
 
 
 fx <- function(x) {
@@ -51,6 +51,7 @@ bounds <- b %>% gather("key", "value", -x) %>%
                    mmean = mean(value),
                    mmedian = median(value))
 
+# Plot the prediction of the mean function
 b %>% gather("key", "value", -x) %>%
   ggplot() +
   geom_ribbon(aes(x = x, ymin = low, ymax = upper), bounds, alpha = 0.1) + 
@@ -61,39 +62,40 @@ b %>% gather("key", "value", -x) %>%
   ggtitle(type)
   
 
+# Simulation of the posterior predictive
 
-x = c(xbegin, predx)
-N = length(x)
-
-nrep <- 10
-
-pp <- ldply(sample(1:nrow(output$rho), 200), function(rnum) {
-  K <- matrix(0, ncol = N, nrow = N)
-  
-  alpha = output$alpha[rnum]
-  rho = output$rho[rnum]
-  eta = output$eta[rnum,] %>% as.matrix()
-  
-  for (i in 1:(N - 1)) {
-    K[i, i] = 1 + alpha^2
-    for (j in (i + 1):N) {
-      K[i, j] = alpha^2 * exp(- 1/ (2 * rho^2) * (x[i] - x[j])^2)
-      K[j, i] = K[i, j]
-    }
-  }
-  K[N, N] = 1 + alpha^2;
-  # for(i in 1:N) K[i,i] = K[i,i] + 1e-9
-  # browser()
-  
-  matrix(rnorm(length(eta) * nrep, as.numeric(t(chol(K)) %*% eta), output$sigma[rnum]), nrow = nrep, byrow = T) 
-  
-})  %>% t() %>% data.frame() %>% cbind(data.frame(x = x)) %>% 
-  tidyr::gather("key", "value", -x)
-
-ggplot(pp) + 
-  geom_line(aes(x, value, group = key), alpha = 0.01) +
-  theme_bw() + 
-  geom_point(aes(x,y), data.frame(x = x, y = tfun(x)), color = "blue")
+# x = c(xbegin, predx)
+# N = length(x)
+# 
+# nrep <- 10
+# 
+# pp <- ldply(sample(1:nrow(output$rho), 200), function(rnum) {
+#   K <- matrix(0, ncol = N, nrow = N)
+#   
+#   alpha = output$alpha[rnum]
+#   rho = output$rho[rnum]
+#   eta = output$eta[rnum,] %>% as.matrix()
+#   
+#   for (i in 1:(N - 1)) {
+#     K[i, i] = 1 + alpha^2
+#     for (j in (i + 1):N) {
+#       K[i, j] = alpha^2 * exp(- 1/ (2 * rho^2) * (x[i] - x[j])^2)
+#       K[j, i] = K[i, j]
+#     }
+#   }
+#   K[N, N] = 1 + alpha^2;
+#   # for(i in 1:N) K[i,i] = K[i,i] + 1e-9
+#   # browser()
+#   
+#   matrix(rnorm(length(eta) * nrep, as.numeric(t(chol(K)) %*% eta), output$sigma[rnum]), nrow = nrep, byrow = T) 
+#   
+# })  %>% t() %>% data.frame() %>% cbind(data.frame(x = x)) %>% 
+#   tidyr::gather("key", "value", -x)
+# 
+# ggplot(pp) + 
+#   geom_line(aes(x, value, group = key), alpha = 0.01) +
+#   theme_bw() + 
+#   geom_point(aes(x,y), data.frame(x = x, y = tfun(x)), color = "blue")
 
 
 

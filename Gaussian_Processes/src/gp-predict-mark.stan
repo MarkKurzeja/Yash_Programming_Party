@@ -4,13 +4,15 @@
 
 data {
   int<lower=1> n;
-  real x[n];
-  real y[n];
+  row_vector[n] x;
+  row_vector[n] y;
   int<lower=1> pred_length;
   real pred_x[pred_length];
   int nruns;
 }
 transformed data {
+  row_vector[n] y_avg = rep_row_vector(mean(y), n);
+  row_vector[n] y_centered = y - y_avg;
   real delta = 1e-9;
   int<lower=1> N = n + pred_length;
   real joint_x[N];
@@ -43,11 +45,11 @@ model {
   sigma ~ normal(0, 1);
   eta ~ normal(0, 1);
 
-  y ~ normal(f[1:n], sigma);
+  y_centered ~ normal(f[1:n], sigma);
 }
 generated quantities {
   vector[pred_length] y2;
 	  for (n2 in 1:pred_length) {
-		y2[n2] = normal_rng(f[n + n2], sigma);
+		y2[n2] = normal_rng(f[n + n2] + mean(y), sigma);
 	  }
 }
