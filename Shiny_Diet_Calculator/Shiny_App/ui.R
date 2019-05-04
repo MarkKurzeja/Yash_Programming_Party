@@ -29,7 +29,7 @@ shinyUI(fluidPage(
         mainPanel(
             htmlOutput("summary"),
             plotOutput("weightPlot"),
-            plotOutput("bfPlot"),
+            plotOutput("bfPlot")
         )
     )
 ))
