@@ -1,0 +1,4 @@
+
+> cat("Program:Stan|Error:Normal|")
+Program:Stan|Error:Normal|
+> sink()

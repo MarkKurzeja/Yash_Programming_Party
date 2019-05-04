@@ -1,4 +1,5 @@
 rm(list = ls())
+setwd(dirname(rstudioapi::getSourceEditorContext()$path))
 library(rstan)
 library(magrittr)
 library(plyr)
@@ -6,21 +7,15 @@ library(dplyr)
 library(ggplot2)
 library(tidyr)
 options(mc.cores = parallel::detectCores())
-setwd("C:/Users/mtkur/Dropbox/Coding & Data Projects/Yash_Programming_Party")
 
+# Read in the training data
+dat <- read.csv("../data/training_data.csv")
+x <- dat$x
+y <- dat$y
 
-fx <- function(x) {
-  3 * cos(x) - .1 + 2 * x
-}
-
-# Create the sample data
-x = seq(5,15, length = 40)
-y = fx(x) + rnorm(length(x), 0, .5)
-predx <- seq(5,20, length = 20)
-
-# Plot the sample data
-plot(x,y)
-curve(fx, add = T)
+# Read in the testing data
+dat <- read.csv("../data/testing_data.csv")
+predx <- dat$x
 
 # Create the data for the input to the algorithm
 sdat <- list(
@@ -33,10 +28,12 @@ sdat <- list(
 )
 
 # Compile the model from source
-mmod <- stan_model(file="gp-predict-mark.stan");
+norm_sq_exp_model <- stan_model(file="gp-predict-normal_sqexp.stan");
+# save(norm_sq_exp_model, file = "./norm_sq_exp_model.model")
+# load("./norm_sq_exp_model.model")
 
 # Run the stan algorithm
-res <- sampling(mmod, data=sdat,  iter = 500, chains = 1)
+res <- sampling(norm_sq_exp_model, data=sdat,  iter = 500, chains = 1)
 
 output <- rstan::extract(res)
 
@@ -54,12 +51,10 @@ bounds <- b %>% gather("key", "value", -x) %>%
 # Plot the prediction of the mean function
 b %>% gather("key", "value", -x) %>%
   ggplot() +
-  geom_ribbon(aes(x = x, ymin = low, ymax = upper), bounds, alpha = 0.1) + 
+  geom_ribbon(aes(x = x, ymin = low, ymax = upper), alpha = 0.1, data = bounds) + 
   geom_point(aes(x, y), data.frame(x = x, y = y), color = "black") +
-  stat_function(fun = fx) +
-  geom_line(aes(x, mmedian), bounds, linetype = 2) + 
-  theme_bw() + 
-  ggtitle(type)
+  geom_line(aes(x, mmedian), data = bounds, linetype = 2) + 
+  theme_bw() 
   
 
 # Simulation of the posterior predictive
