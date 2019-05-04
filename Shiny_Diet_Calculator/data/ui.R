@@ -22,8 +22,8 @@ shinyUI(fluidPage(
             ############# Summmary ######################
             htmlOutput("summaryTitle"),
             selectInput("kgLossRate", label = h6(""), 
-                        choices = list("Select Pace" = 0, "Medium" = 1, "Slow" = 2, "Aggressive" = 3), 
-                        selected = 0),
+                        choices = c("Select Pace", "Medium", "Slow", "Aggressive"), 
+                        selected = 1),
             htmlOutput("summary"),
             htmlOutput("calChange"),
             ############# Inputs for check in ###########
