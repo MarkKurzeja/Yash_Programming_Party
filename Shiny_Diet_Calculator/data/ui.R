@@ -20,7 +20,12 @@ shinyUI(fluidPage(
         sidebarPanel(
             
             ############# Summmary ######################
+            htmlOutput("summaryTitle"),
+            selectInput("kgLossRate", label = h6(""), 
+                        choices = list("Select Pace" = 0, "Medium" = 1, "Slow" = 2, "Aggressive" = 3), 
+                        selected = 0),
             htmlOutput("summary"),
+            htmlOutput("calChange"),
             ############# Inputs for check in ###########
             numericInput("numW", label = h4("Weight"), value = 1),
             numericInput("numC", label = h4("Chest"), value = 1),
