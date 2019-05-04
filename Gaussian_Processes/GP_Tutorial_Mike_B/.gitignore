@@ -1,0 +1,11 @@
+*.Rapp.history
+*.aux
+*.log
+*.synctex.gz
+*.RData
+*.Rapp.history
+*.Rhistory
+.DS_Store
+*.rds
+*_files
+*_cache
