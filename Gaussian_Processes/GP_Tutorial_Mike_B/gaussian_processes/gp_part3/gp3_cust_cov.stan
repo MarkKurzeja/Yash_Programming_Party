@@ -1,6 +1,10 @@
 functions {
+  // Link for the matern function: http://www.gaussianprocess.org/gpml/chapters/RW4.pdf p85
+  
   matrix cov_exp_quad_cust(real[] x, real[] y, real alpha, real rho) {
     // return(cov_exp_quad(x, y, alpha, rho));
+    
+    // Work with the matrix operations to get the smoothed exp going
     int N1 = size(x);
     int N2 = size(y);
     matrix[N1, N2] result;                                                                                                matrix[N1, N1] D;                                                                                                
